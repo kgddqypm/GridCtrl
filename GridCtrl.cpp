@@ -265,6 +265,8 @@ CGridCtrl::CGridCtrl(int nRows, int nCols, int nFixedRows, int nFixedCols)
 	m_pfnCompare		  = NULL;
 	m_pfnVirtualCompare   = NULL;
     m_nAutoSizeColumnStyle = GVS_BOTH;  // Autosize grid using header and data info
+    m_bShowHortScroll     = TRUE;       // 显示水平滚动条
+    m_bShowVertScroll     = TRUE;       // 显示垂直滚动条
 
     m_nTimerID            = 0;          // For drag-selection
     m_nTimerInterval      = 25;         // (in milliseconds)
@@ -3276,17 +3278,25 @@ void CGridCtrl::ResetScrollBars()
     //      IsVisibleHScroll(), IsVisibleVScroll());
 
     // If vertical scroll bar, horizontal space is reduced
-    if (VisibleRect.Height() < VirtualRect.Height())
-        VisibleRect.right -= ::GetSystemMetrics(SM_CXVSCROLL);
+    if (m_bShowVertScroll)
+    {
+        if (VisibleRect.Height() < VirtualRect.Height())
+            VisibleRect.right -= ::GetSystemMetrics(SM_CXVSCROLL);
+    }
     // If horz scroll bar, vert space is reduced
-    if (VisibleRect.Width() < VirtualRect.Width())
-        VisibleRect.bottom -= ::GetSystemMetrics(SM_CYHSCROLL);
+    if (m_bShowHortScroll)
+    {
+        if (VisibleRect.Width() < VirtualRect.Width())
+            VisibleRect.bottom -= ::GetSystemMetrics(SM_CYHSCROLL);
+    }
+
+    // m_bShowHortScroll 显示垂直滚动条
+    // m_bShowVertScroll 显示水平滚动条
     
     // Recheck vertical scroll bar
     //if (VisibleRect.Height() < VirtualRect.Height())
     // VisibleRect.right -= ::GetSystemMetrics(SM_CXVSCROLL);
-    
-    if (VisibleRect.Height() < VirtualRect.Height())
+    if (VisibleRect.Height() < VirtualRect.Height() && m_bShowVertScroll)
     {
         EnableScrollBars(SB_VERT, TRUE); 
         m_nVScrollMax = VirtualRect.Height() - 1;
@@ -3297,7 +3307,7 @@ void CGridCtrl::ResetScrollBars()
         m_nVScrollMax = 0;
     }
 
-    if (VisibleRect.Width() < VirtualRect.Width())
+    if (VisibleRect.Width() < VirtualRect.Width() && m_bShowHortScroll)
     {
         EnableScrollBars(SB_HORZ, TRUE); 
         m_nHScrollMax = VirtualRect.Width() - 1;
@@ -4200,6 +4210,19 @@ BOOL CGridCtrl::DeleteNonFixedRows()
         DeleteRow(nRow);
 	}
     return TRUE;
+}
+
+// Removes all Selected rows
+BOOL CGridCtrl::DeleteSelectedRows()
+{
+    const CCellRange &CellRange = GetSelectedCellRange();
+    
+    BOOL bRes = TRUE;
+    for (int i=CellRange.GetMaxRow(); i>=CellRange.GetMinRow(); --i)
+    {
+        bRes &= DeleteRow(i);
+    }
+    return bRes;
 }
 
 // Removes all rows, columns and data from the grid.

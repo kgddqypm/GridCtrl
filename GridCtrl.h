@@ -338,6 +338,10 @@ public:
     BOOL GetFrameFocusCell()                      { return m_bFrameFocus;             }
     void SetAutoSizeStyle(int nStyle = GVS_BOTH)  { m_nAutoSizeColumnStyle = nStyle;  }
     int  GetAutoSizeStyle()                       { return m_nAutoSizeColumnStyle; }
+    void SetShowHortScroll(BOOL bShow = TRUE)     { m_bShowHortScroll = bShow;        }
+    BOOL GetShowHortScroll()const                 { return m_bShowHortScroll;         }
+    void SetShowVertScroll(BOOL bShow = TRUE)     { m_bShowVertScroll = bShow;        }
+    BOOL GetShowVertScroll()const                 { return m_bShowVertScroll;         }
 
     void EnableHiddenColUnhide(BOOL bEnable = TRUE){ m_bHiddenColUnhide = bEnable;    }
     BOOL GetHiddenColUnhide()                     { return m_bHiddenColUnhide;        }
@@ -409,6 +413,7 @@ public:
     BOOL DeleteColumn(int nColumn);
     BOOL DeleteRow(int nRow);
     BOOL DeleteNonFixedRows();
+    BOOL DeleteSelectedRows();
     BOOL DeleteAllItems();
 
 	void ClearCells(CCellRange Selection);
@@ -659,6 +664,8 @@ protected:
     BOOL        m_bTrackFocusCell;
     BOOL        m_bFrameFocus;
     UINT        m_nAutoSizeColumnStyle;
+    BOOL        m_bShowHortScroll;                                  // 显示水平滚动条
+    BOOL        m_bShowVertScroll;                                  // 显示垂直滚动条
 
     // Cell size details
     int         m_nRows, m_nFixedRows, m_nCols, m_nFixedCols;
