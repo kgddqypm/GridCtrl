@@ -22,6 +22,16 @@
 //
 //////////////////////////////////////////////////////////////////////
 
+// FEATURES BY Mukit, Ataul (2007-11-17):
+// 1. Merge Cell 
+// 2. Ability to do XL Style Freeze Pane
+// 3. The Horizontal Gray Area Removed 
+  
+// FINDINGS:
+// 1. A cell cannot be edited if a tooltip is shown..
+// 2. The InplaceEditCtrl is not multiline even if a cell can contain Multiline Text..
+// 3. If a cell is too small, the InplaceEditCtrl is almost invisible..
+
 #if !defined(AFX_GRIDCTRL_H__519FA702_722C_11D1_ABBA_00A0243D1382__INCLUDED_)
 #define AFX_GRIDCTRL_H__519FA702_722C_11D1_ABBA_00A0243D1382__INCLUDED_
 
@@ -144,6 +154,8 @@ typedef BOOL (CALLBACK* GRIDCALLBACK)(GV_DISPINFO *, LPARAM);
 #define GVNI_READONLY           0x0008
 #define GVNI_FIXED              0x0010
 #define GVNI_MODIFIED           0x0020
+// LUC
+#define GVNI_FREEZED			0x0040
 
 #define GVNI_ABOVE              LVNI_ABOVE
 #define GVNI_BELOW              LVNI_BELOW
@@ -200,15 +212,116 @@ public:
 // Attributes
 ///////////////////////////////////////////////////////////////////////////////////
 public:
+
+///// LUC ///////////////////////////////////////////////////////////////////////
+
+	//// LUC : MergeCell////////
+	
+	INT_PTR MergeCells(CCellRange& mergedCellRange);
+	void SplitCells(INT_PTR nMergeID);
+
+	BOOL IsMergedCell(int row, int col, CCellRange& mergedCellRange);
+	BOOL GetMergedCellRect(int row, int col, CRect& rect);
+	BOOL GetMergedCellRect(CCellRange& mergedCell, CRect& rect);
+	BOOL GetTopLeftMergedCell(int& row, int& col, CRect& mergeRect);
+	BOOL GetBottomRightMergedCell(int& row, int& col, CRect& mergeRect);
+	virtual BOOL IsFocused(CGridCellBase& cell, int nRow, int nCol);
+	virtual BOOL IsSelected(CGridCellBase& cell, int nRow, int nCol);
+
+	BOOL	m_bDrawingMergedCell;
+	INT_PTR	m_nCurrentMergeID;
+
+	static CRect rectNull;		
+	static CCellID cellNull;
+
+	// LUC : Freeze Rows	
+
+	BOOL SetFreezedRowCount(int nFreezedRows)
+	{
+		BOOL bRet = FALSE;
+		if( (nFreezedRows >= 0) && ((nFreezedRows + m_nFixedRows) <= m_nRows) )
+		{
+			m_nFreezedRows = nFreezedRows;
+			ResetScrollBars();
+			Refresh();
+			bRet = TRUE;
+		}
+	
+		return bRet;
+		
+	}
+	
+	BOOL SetFreezedColumnCount(int nFreezedCols)
+	{
+		BOOL bRet = FALSE;
+		if( (nFreezedCols >= 0) && ((nFreezedCols + m_nFixedCols) <= m_nCols) )
+		{
+			m_nFreezedCols = nFreezedCols;
+			ResetScrollBars();
+			Refresh();
+			bRet = TRUE;
+		}
+	
+		return bRet;
+	}
+
+	// To avoid calling ResetScrollBars twice you can use SetFreezedFrame
+	BOOL SetFreezedFrame(int nFreezedRows, int nFreezedCols)
+	{
+		BOOL bRet = FALSE;
+		if( (nFreezedRows >= 0) && ((nFreezedRows + m_nFixedRows) <= m_nRows) )
+		{
+			m_nFreezedRows = nFreezedRows;			
+			bRet = TRUE;
+		}
+		if( (nFreezedCols >= 0) && ((nFreezedCols + m_nFixedCols) <= m_nCols) )
+		{
+			m_nFreezedCols = nFreezedCols;
+			bRet = TRUE;
+		}
+		else
+		{
+			bRet = FALSE;
+		}
+
+		ResetScrollBars();
+			
+		return bRet;			
+	}	
+	
+	int  GetFreezedRowCount() const                    { return m_nFreezedRows; }
+    int  GetFreezedColumnCount() const                 { return m_nFreezedCols; }	
+
+	void ShowHorzNonGridArea(BOOL bShow)
+	{
+		m_bShowHorzNonGridArea = bShow;
+	}
+
+	BOOL IsShowingHorzNonGridArea()
+	{
+		return m_bShowHorzNonGridArea;
+	}
+
+///////////////////////////////////////////////////////////////////////////////////////    
+	
     int  GetRowCount() const                    { return m_nRows; }
     int  GetColumnCount() const                 { return m_nCols; }
-    int  GetFixedRowCount() const               { return m_nFixedRows; }
-    int  GetFixedColumnCount() const            { return m_nFixedCols; }
-    BOOL SetRowCount(int nRows = 10);
+    int  GetFixedRowCount(BOOL bIncludeFreezedRows = FALSE) const
+	{ 
+		return (bIncludeFreezedRows) ? (m_nFixedRows + m_nFreezedRows) : m_nFixedRows;
+	}
+    int  GetFixedColumnCount(BOOL bIncludeFreezedCols = FALSE) const            
+	{
+		return (bIncludeFreezedCols) ? (m_nFixedCols + m_nFreezedCols) : m_nFixedCols; 
+	}	
+	
+	BOOL SetRowCount(int nRows = 10);
     BOOL SetColumnCount(int nCols = 10);
-    BOOL SetFixedRowCount(int nFixedRows = 1);
-    BOOL SetFixedColumnCount(int nFixedCols = 1);
+    
+	BOOL SetFixedRowCount(int nFixedRows = 1);
+    BOOL SetFixedColumnCount(int nFixedCols = 1);	
 
+public:
     int  GetRowHeight(int nRow) const;
     BOOL SetRowHeight(int row, int height);
     int  GetColumnWidth(int nCol) const;
@@ -222,10 +335,16 @@ public:
     BOOL GetTextRect(const CCellID& cell, LPRECT pRect);
     BOOL GetTextRect(int nRow, int nCol, LPRECT pRect);
 
-    CCellID GetCellFromPt(CPoint point, BOOL bAllowFixedCellCheck = TRUE);
+    // LUC
+	// Change for MergeCell
+	CCellID GetCellFromPt(CPoint point, BOOL bAllowFixedCellCheck = TRUE, CCellID& cellOriginal = cellNull);
 
-    int  GetFixedRowHeight() const;
-    int  GetFixedColumnWidth() const;
+	// LUC
+    //int  GetFixedRowHeight() const;
+    //int  GetFixedColumnWidth() const;	    
+	int	GetFixedRowHeight(BOOL bIncludeFreezedRows = FALSE) const;
+	int GetFixedColumnWidth(BOOL bIncludeFreezedCols = FALSE) const;
+
     long GetVirtualWidth() const;
     long GetVirtualHeight() const;
 
@@ -570,6 +689,7 @@ protected:
 
     CCellID GetTopleftNonFixedCell(BOOL bForceRecalculation = FALSE);
     CCellRange GetUnobstructedNonFixedCellRange(BOOL bForceRecalculation = FALSE);
+	// LUC
     CCellRange GetVisibleNonFixedCellRange(LPRECT pRect = NULL, BOOL bForceRecalculation = FALSE);
     CCellRange GetVisibleFixedCellRange(LPRECT pRect = NULL, BOOL bForceRecalculation = FALSE);
 
@@ -669,6 +789,16 @@ protected:
 
     // Cell size details
     int         m_nRows, m_nFixedRows, m_nCols, m_nFixedCols;
+	// LUC
+	int			m_nFreezedRows, m_nFreezedCols;
+	BOOL m_bExcludeFreezedRowsFromSelection;
+	BOOL m_bExcludeFreezedColsFromSelection;
+	
+	// LUC
+	CArray<CCellRange, CCellRange&> m_arMergedCells;
+	// LUC
+	BOOL m_bShowHorzNonGridArea;
+	
     CUIntArray  m_arRowHeights, m_arColWidths;
     int         m_nVScrollMax, m_nHScrollMax;
 
@@ -747,7 +877,7 @@ protected:
     afx_msg void OnLButtonUp(UINT nFlags, CPoint point);
     afx_msg void OnLButtonDown(UINT nFlags, CPoint point);
     afx_msg void OnMouseMove(UINT nFlags, CPoint point);
-    afx_msg void OnTimer(UINT_PTR nIDEvent);
+    afx_msg void OnTimer(UINT nIDEvent);
     afx_msg UINT OnGetDlgCode();
     afx_msg void OnKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
 	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);

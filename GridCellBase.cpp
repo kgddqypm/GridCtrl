@@ -148,14 +148,18 @@ BOOL CGridCellBase::Draw(CDC* pDC, int nRow, int nCol, CRect rect,  BOOL bEraseB
     }
 
     // Draw cell background and highlighting (if necessary)
-    if ( IsFocused() || IsDropHighlighted() )
+    // LUC
+	//if ( IsFocused() || IsDropHighlighted() )
+	if( GetGrid()->IsFocused(*this, nRow, nCol) || IsDropHighlighted() )
     {
         // Always draw even in list mode so that we can tell where the
         // cursor is at.  Use the highlight colors though.
-        if(GetState() & GVIS_SELECTED)
+		// LUC
+        if(GetGrid()->IsSelected(*this, nRow, nCol))
         {
             TextBkClr = ::GetSysColor(COLOR_HIGHLIGHT);
-            TextClr = ::GetSysColor(COLOR_HIGHLIGHTTEXT);
+			TextClr = ::GetSysColor(COLOR_HIGHLIGHTTEXT);			
+			
             bEraseBkgnd = TRUE;
         }
 
@@ -208,7 +212,9 @@ BOOL CGridCellBase::Draw(CDC* pDC, int nRow, int nCol, CRect rect,  BOOL bEraseB
 
 		//rect.DeflateRect(0,1,1,1);  - Removed by Yogurt
     }
-    else if ((GetState() & GVIS_SELECTED))
+	// LUC
+    //else if ((GetState() & GVIS_SELECTED))
+	else if(GetGrid()->IsSelected(*this, nRow, nCol))
     {
         rect.right++; rect.bottom++;    // FillRect doesn't draw RHS or bottom
         pDC->FillSolidRect(rect, ::GetSysColor(COLOR_HIGHLIGHT));
