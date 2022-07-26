@@ -596,6 +596,7 @@ BEGIN_MESSAGE_MAP(CGridCtrl, CWnd)
     ON_WM_KEYDOWN()
     ON_WM_CHAR()
     ON_WM_LBUTTONDBLCLK()
+    ON_WM_RBUTTONDBLCLK()
     ON_WM_ERASEBKGND()
     ON_UPDATE_COMMAND_UI(ID_EDIT_SELECT_ALL, OnUpdateEditSelectAll)
     ON_COMMAND(ID_EDIT_SELECT_ALL, OnEditSelectAll)
@@ -5234,6 +5235,30 @@ COLORREF CGridCtrl::GetItemFgColour(int nRow, int nCol) const
     return pCell->GetTextClr();
 }
 
+BOOL CGridCtrl::SetItemFrColour(int nRow, int nCol, COLORREF cr /* = CLR_DEFAULT */)
+{
+    if (GetVirtualMode())
+        return FALSE;
+
+    CGridCellBase* pCell = GetCell(nRow, nCol);
+    ASSERT(pCell);
+    if (!pCell)
+        return FALSE;
+
+    pCell->SetFrameClr(cr);
+    return TRUE;
+}
+
+COLORREF CGridCtrl::GetItemFrColour(int nRow, int nCol) const
+{
+    CGridCellBase* pCell = GetCell(nRow, nCol);
+    ASSERT(pCell);
+    if (!pCell)
+        return 0;
+
+    return pCell->GetFrameClr();
+}
+
 BOOL CGridCtrl::SetItemFont(int nRow, int nCol, const LOGFONT* plf)
 {
     if (GetVirtualMode())
@@ -6455,6 +6480,23 @@ void CGridCtrl::OnLButtonDblClk(UINT nFlags, CPoint point)
     CWnd::OnLButtonDblClk(nFlags, point);
 }
 
+void CGridCtrl::OnRButtonDblClk(UINT nFlags, CPoint point)
+{
+    CCellID cell = GetCellFromPt(point);
+    if (!IsValid(cell))
+    {
+        //ASSERT(FALSE);
+        return;
+    }
+
+    if (m_MouseMode == MOUSE_NOTHING)
+    {
+        SendMessageToParent(cell.row, cell.col, NM_RDBLCLK);
+    }
+
+    CWnd::OnRButtonDblClk(nFlags, point);
+}
+
 void CGridCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 {
 #ifdef GRIDCONTROL_USE_TITLETIPS
@@ -6795,6 +6837,7 @@ void CGridCtrl::OnLButtonDown(UINT nFlags, CPoint point)
         if (m_LeftClickDownCell.row < GetFixedRowCount())
 		{
             OnFixedRowClick(m_LeftClickDownCell);
+#ifndef GRIDCONTROL_NO_DRAGDROP
             if(m_AllowReorderColumn && m_LeftClickDownCell.col >=  GetFixedColumnCount())
 			{
 				ResetSelectedRange(); // TODO : This is not the better solution, as we do not see why clicking in column header should reset selection
@@ -6802,6 +6845,7 @@ void CGridCtrl::OnLButtonDown(UINT nFlags, CPoint point)
 				m_MouseMode = MOUSE_PREPARE_DRAG;
 				m_CurCol = m_LeftClickDownCell.col;
 			}
+#endif
 		}
         else if (m_LeftClickDownCell.col < GetFixedColumnCount())
             OnFixedColumnClick(m_LeftClickDownCell);

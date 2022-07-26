@@ -514,6 +514,8 @@ public:
     COLORREF GetItemBkColour(int nRow, int nCol) const;
     BOOL   SetItemFgColour(int nRow, int nCol, COLORREF cr = CLR_DEFAULT);
     COLORREF GetItemFgColour(int nRow, int nCol) const;
+    BOOL   SetItemFrColour(int nRow, int nCol, COLORREF cr = CLR_DEFAULT);
+    COLORREF GetItemFrColour(int nRow, int nCol) const;
     BOOL SetItemFont(int nRow, int nCol, const LOGFONT* lf);
     const LOGFONT* GetItemFont(int nRow, int nCol);
 
@@ -883,6 +885,7 @@ protected:
 	afx_msg void OnKeyUp(UINT nChar, UINT nRepCnt, UINT nFlags);
     afx_msg void OnChar(UINT nChar, UINT nRepCnt, UINT nFlags);
     afx_msg void OnLButtonDblClk(UINT nFlags, CPoint point);
+    afx_msg void OnRButtonDblClk(UINT nFlags, CPoint point);
     afx_msg BOOL OnEraseBkgnd(CDC* pDC);
     afx_msg void OnSysKeyDown(UINT nChar, UINT nRepCnt, UINT nFlags);
     afx_msg void OnUpdateEditSelectAll(CCmdUI* pCmdUI);
